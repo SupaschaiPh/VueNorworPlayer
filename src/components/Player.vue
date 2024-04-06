@@ -2,8 +2,16 @@
 import { onMounted, ref } from "vue";
 import "normalize.css";
 const videoElement = ref<HTMLVideoElement | null>(null);
+const containerElement = ref<HTMLDivElement | null>(null);
+
 const currentTime = ref<number | undefined>(0);
 const duration = ref<number | undefined>(0);
+const color = ref("white");
+const holdVolume = ref(100);
+const volume = ref(holdVolume.value);
+
+const isPaused = ref(true);
+const isFullscreen = ref(false);
 
 function changeTimeHandler() {
   if (videoElement.value) {
@@ -12,52 +20,163 @@ function changeTimeHandler() {
 }
 
 function playHandler() {
-    console.log("play")
+  console.log("play");
   if (videoElement.value) {
     if (!videoElement.value.paused) {
       videoElement.value.pause();
     } else {
       videoElement.value.play();
     }
+    isPaused.value = videoElement.value.paused;
   }
 }
+
+function volumeToggleHandler(){
+  if (videoElement.value) {
+    if (videoElement.value.volume > 0) {
+      holdVolume.value = volume.value
+      videoElement.value.volume = 0;
+      volume.value = 0;
+    } else {
+      videoElement.value.volume = holdVolume.value/100
+      volume.value = holdVolume.value
+    }
+  }
+}
+
+function fullscreenHandler(){
+  if (videoElement.value && containerElement.value) {
+    if(isFullscreen.value)
+    document?.exitFullscreen()
+    else
+    containerElement.value?.requestFullscreen()
+    containerElement.value.onfullscreenchange = ()=>{
+      isFullscreen.value = !isFullscreen.value
+    }
+   
+    }
+}
+
 onMounted(() => {
   if (videoElement.value) {
     videoElement.value.ontimeupdate = () => {
       currentTime.value = videoElement.value?.currentTime;
     };
-    videoElement.value.controls = true;
-    duration.value = videoElement.value.duration;
-    videoElement.value.onloadeddata = (ev) => {
-      console.log(videoElement.value.duration);
-      duration.value = videoElement.value.duration;
+    videoElement.value.onloadeddata = () => {
+      if (videoElement.value) duration.value = videoElement.value.duration;
     };
+
+    duration.value = videoElement.value.duration;
+    isPaused.value = videoElement.value.paused;
   }
+  document
+    .querySelector("div.player-bottom-bar-volumn div.v-input__details")
+    ?.remove();
 });
 </script>
 
 <template>
-  {{ currentTime }} {{ duration }}
-  <section class="player-container">
+  <section class="player-container" ref="containerElement">
     <video
       class="player-video-element"
       ref="videoElement"
       src="/BigBuckBunny.mp4"
     ></video>
-    <div class="player-video-controler">
+    <div class="player-video-controler" >
       <div></div>
-      <div></div>
+      <div @click="playHandler()"></div>
       <div>
-        <div style="display: flex; flex-direction: column">
-          <span>
-            <v-btn @click="playHandler" rounded="lg"></v-btn>
-          </span>
+        <div
+          class="player-bottom-bar"
+          style="display: flex; flex-direction: column"
+        >
           <v-slider
             :max="duration"
             v-model="currentTime"
             @update:modelValue="changeTimeHandler"
-            color="white"
-          ></v-slider>
+            :color="color"
+          >
+            <template v-slot:details>
+              <div
+                class="flexy"
+                style="width: 100%; justify-content: space-between"
+              >
+                <div class="flexy">
+                  <v-btn
+                    :color="color"
+                    :icon="isPaused ? 'mdi-play' : 'mdi-pause'"
+                    density="compact"
+                    @click="playHandler"
+                    rounded="lg"
+                    variant="text"
+                  ></v-btn>
+                  <v-hover>
+                    <template v-slot:default="{ isHovering, props }">
+                      <span
+                        v-bind="props"
+                        :style="
+                          'display: flex; align-items: center; ' +
+                          (isHovering ? 'width: 6rem;' : '')
+                        "
+                      >
+                        <v-btn
+                          :color="color"
+                          :icon=" volume!=0 ? 'mdi-volume-high' : 'mdi-volume-variant-off'"
+                          density="compact"
+                          @click="volumeToggleHandler"
+                          rounded="lg"
+                          variant="text"
+                        ></v-btn>
+                        <span :style="!isHovering ? 'width:0px;overflow: hidden;' : 'width:100%'">
+                        <v-slider
+                          v-bind="props"
+                          min="0"
+                          max="100"
+                          v-model="volume"
+                          class="player-bottom-bar-volumn"
+                          :color="color"
+                          density="compact"
+                          :thumb-size="16"
+                        ></v-slider>
+                        </span>
+                      </span>
+                    </template>
+                  </v-hover>
+                  <p style="text-shadow: 0 0 2px black">
+                    {{ ((currentTime as number) / 60).toFixed(2) }}
+                    /
+                    {{ ((duration as number) / 60).toFixed(2) }}
+                  </p>
+                </div>
+                <div class="flexy">
+                  <v-btn
+                    :color="color"
+                    icon="mdi-cog"
+                    density="compact"
+                    @click="playHandler"
+                    rounded="lg"
+                    variant="text"
+                  ></v-btn>
+                  <v-btn
+                    :color="color"
+                    icon="mdi-picture-in-picture-bottom-right"
+                    density="compact"
+                    @click="playHandler"
+                    rounded="lg"
+                    variant="text"
+                  ></v-btn>
+                  <v-btn
+                    :color="color"
+                    :icon=" isFullscreen ?  'mdi-fullscreen-exit' : 'mdi-fullscreen'"
+                    density="compact"
+                    @click="fullscreenHandler"
+                    rounded="lg"
+                    variant="text"
+                  ></v-btn>
+                </div>
+              </div>
+            </template>
+          </v-slider>
         </div>
       </div>
     </div>
@@ -72,6 +191,10 @@ onMounted(() => {
   max-width: 100%;
   max-height: 100%;
 }
+.player-video-element {
+  width: 100%;
+  height: 100%;
+}
 .player-video-controler {
   position: absolute;
   height: 100%;
@@ -80,15 +203,25 @@ onMounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
 }
 .player-video-controler > div:first-child {
   flex-grow: 1;
 }
 .player-video-controler > div:nth-child(2) {
-  flex-grow: 90;
+  flex-grow: 100;
 }
 .player-video-controler > div:last-child {
   flex-grow: 1;
+}
+.player-bottom-bar {
+  padding: 5px;
+}
+div.player-bottom-bar-volumn div.v-input__details {
+  display: none !important;
+}
+.flexy {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 </style>
