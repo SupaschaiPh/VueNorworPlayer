@@ -19,8 +19,13 @@ function changeTimeHandler() {
   }
 }
 
+function changeVolumnHandler() {
+  if (videoElement.value) {
+    videoElement.value.volume = (volume.value as number) / 100;
+  }
+}
+
 function playHandler() {
-  console.log("play");
   if (videoElement.value) {
     if (!videoElement.value.paused) {
       videoElement.value.pause();
@@ -31,30 +36,33 @@ function playHandler() {
   }
 }
 
-function volumeToggleHandler(){
+function volumeToggleHandler() {
   if (videoElement.value) {
     if (videoElement.value.volume > 0) {
-      holdVolume.value = volume.value
+      holdVolume.value = volume.value;
       videoElement.value.volume = 0;
       volume.value = 0;
     } else {
-      videoElement.value.volume = holdVolume.value/100
-      volume.value = holdVolume.value
+      videoElement.value.volume = holdVolume.value / 100;
+      volume.value = holdVolume.value;
     }
   }
 }
 
-function fullscreenHandler(){
+function fullscreenHandler() {
   if (videoElement.value && containerElement.value) {
-    if(isFullscreen.value)
-    document?.exitFullscreen()
-    else
-    containerElement.value?.requestFullscreen()
-    containerElement.value.onfullscreenchange = ()=>{
-      isFullscreen.value = !isFullscreen.value
-    }
-   
-    }
+    if (isFullscreen.value) document?.exitFullscreen();
+    else containerElement.value?.requestFullscreen();
+    containerElement.value.onfullscreenchange = () => {
+      isFullscreen.value = !isFullscreen.value;
+    };
+  }
+}
+
+function onKeypressHandler(e: KeyboardEvent) {
+  if (e.key == " ") {
+    playHandler();
+  }
 }
 
 onMounted(() => {
@@ -72,6 +80,8 @@ onMounted(() => {
   document
     .querySelector("div.player-bottom-bar-volumn div.v-input__details")
     ?.remove();
+
+  document.addEventListener("keypress", onKeypressHandler);
 });
 </script>
 
@@ -82,7 +92,7 @@ onMounted(() => {
       ref="videoElement"
       src="/BigBuckBunny.mp4"
     ></video>
-    <div class="player-video-controler" >
+    <div class="player-video-controler">
       <div></div>
       <div @click="playHandler()"></div>
       <div>
@@ -121,23 +131,34 @@ onMounted(() => {
                       >
                         <v-btn
                           :color="color"
-                          :icon=" volume!=0 ? 'mdi-volume-high' : 'mdi-volume-variant-off'"
+                          :icon="
+                            volume != 0
+                              ? 'mdi-volume-high'
+                              : 'mdi-volume-variant-off'
+                          "
                           density="compact"
                           @click="volumeToggleHandler"
                           rounded="lg"
                           variant="text"
                         ></v-btn>
-                        <span :style="!isHovering ? 'width:0px;overflow: hidden;' : 'width:100%'">
-                        <v-slider
-                          v-bind="props"
-                          min="0"
-                          max="100"
-                          v-model="volume"
-                          class="player-bottom-bar-volumn"
-                          :color="color"
-                          density="compact"
-                          :thumb-size="16"
-                        ></v-slider>
+                        <span
+                          :style="
+                            !isHovering
+                              ? 'width:0px;overflow: hidden;'
+                              : 'width:100%'
+                          "
+                        >
+                          <v-slider
+                            v-bind="props"
+                            min="0"
+                            max="100"
+                            v-model="volume"
+                            class="player-bottom-bar-volumn"
+                            :color="color"
+                            density="compact"
+                            :thumb-size="16"
+                            @update:model-value="changeVolumnHandler"
+                          ></v-slider>
                         </span>
                       </span>
                     </template>
@@ -151,12 +172,24 @@ onMounted(() => {
                 <div class="flexy">
                   <v-btn
                     :color="color"
-                    icon="mdi-cog"
+                    append-icon="mdi-cog"
                     density="compact"
                     @click="playHandler"
                     rounded="lg"
                     variant="text"
-                  ></v-btn>
+                  >
+                    <v-menu opacity="100%" activator="parent" location="top">
+                      <v-list rounded="xl" :color="color">
+                        <v-list-item density="compact" title="Playback speed">
+                        </v-list-item>
+                        <v-list-item
+                          density="compact"
+                          title="Resolution qulity"
+                        >
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
+                  </v-btn>
                   <v-btn
                     :color="color"
                     icon="mdi-picture-in-picture-bottom-right"
@@ -167,7 +200,9 @@ onMounted(() => {
                   ></v-btn>
                   <v-btn
                     :color="color"
-                    :icon=" isFullscreen ?  'mdi-fullscreen-exit' : 'mdi-fullscreen'"
+                    :icon="
+                      isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'
+                    "
                     density="compact"
                     @click="fullscreenHandler"
                     rounded="lg"
@@ -186,14 +221,16 @@ onMounted(() => {
 <style scoped>
 .player-container {
   position: relative;
-  height: fit-content;
-  width: fit-content;
-  max-width: 100%;
-  max-height: 100%;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 .player-video-element {
   width: 100%;
   height: 100%;
+  padding: 0;
+  margin: 0;
+  background-color: black;
 }
 .player-video-controler {
   position: absolute;
