@@ -96,7 +96,7 @@ onMounted(() => {
     ></video>
     <div class="player-video-controler">
       <div></div>
-      <div @click="playHandler()" class="flexy" style="justify-content: center">
+      <div @click="playHandler" class="flexy" style="justify-content: center">
         <v-btn
           v-if="isPaused"
           :size="69"
