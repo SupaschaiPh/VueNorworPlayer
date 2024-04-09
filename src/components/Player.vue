@@ -12,6 +12,7 @@ const volume = ref(holdVolume.value);
 
 const isPaused = ref(true);
 const isFullscreen = ref(false);
+const isSetting = ref(false)
 
 function changeTimeHandler() {
   if (videoElement.value) {
@@ -91,10 +92,24 @@ onMounted(() => {
       class="player-video-element"
       ref="videoElement"
       src="/BigBuckBunny.mp4"
+      style="width: 100%; height: 100%"
     ></video>
     <div class="player-video-controler">
       <div></div>
-      <div @click="playHandler()"></div>
+      <div @click="playHandler()" class="flexy" style="justify-content: center;">
+        <v-btn
+                    :size="69"
+                    :color="color"
+                    density="compact"
+                    @click="playHandler"
+                    rounded="lg"
+                    variant="tonal"
+                  >
+                <v-icon size="32">
+                  {{ isPaused ? 'mdi-play' : 'mdi-pause' }}
+                </v-icon>
+                </v-btn>
+      </div>
       <div>
         <div
           class="player-bottom-bar"
@@ -170,26 +185,45 @@ onMounted(() => {
                   </p>
                 </div>
                 <div class="flexy">
-                  <v-btn
-                    :color="color"
-                    append-icon="mdi-cog"
-                    density="compact"
-                    @click="playHandler"
-                    rounded="lg"
-                    variant="text"
-                  >
-                    <v-menu opacity="100%" activator="parent" location="top">
-                      <v-list rounded="xl" :color="color">
+                  <div v-if="isSetting">
+                      <v-list style="position: absolute;bottom:50px" rounded="xl" :color="color">
                         <v-list-item density="compact" title="Playback speed">
                         </v-list-item>
                         <v-list-item
                           density="compact"
                           title="Resolution qulity"
                         >
+                          <v-menu
+                            opacity="100%"
+                            activator="parent"
+                            location="right"
+                            style="position: absolute;"
+                          >
+                            <v-list rounded="xl" :color="color">
+                              <v-list-item density="compact" title="1080p">
+                              </v-list-item>
+                              <v-list-item density="compact" title="720p">
+                              </v-list-item>
+                              <v-list-item density="compact" title="540p">
+                              </v-list-item>
+                            </v-list>
+                          </v-menu>
                         </v-list-item>
                       </v-list>
-                    </v-menu>
+                  </div>
+                  <v-btn
+                    :color="color"
+                    icon="mdi-cog"
+                    density="compact"
+                    @click="()=>isSetting = !isSetting"
+                    rounded="lg"
+                    variant="text"
+                    id="menu-activator"
+                    
+                  >
+                  
                   </v-btn>
+                  
                   <v-btn
                     :color="color"
                     icon="mdi-picture-in-picture-bottom-right"
